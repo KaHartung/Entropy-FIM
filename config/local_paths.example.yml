@@ -1,0 +1,8 @@
+# Machine-local paths, for ad hoc scripts/notebooks outside the main pipeline.
+# Copy this file to config/local_paths.yml (gitignored) and fill in the paths for
+# this machine.
+
+model_name: "./outputs/train/<run_name>"
+dataset_path: "./data/comparison_datasets/test"
+java_home: null  # path to your local JDK installation
+plantuml_jar_path: "./data_pipeline/java/plantuml-mit-1.2026.6.jar"

@@ -1,0 +1,46 @@
+# Drives `uv run main.py --config config/data_pipeline.yml data-prepare`, which runs
+# the whole data pipeline (download the Stack data, download + import the
+# UML-in-the-wild data, join the two, filter to the strict test/train_strict split)
+# in one call. Each stage is also runnable on its own via its script in
+# data_pipeline/ -- see the README.
+
+data_pipeline:
+  # ---------------------- download_stack.py ----------------------
+  stack_target_dir: "./data/raw"
+  debug_download: false  # true downloads only ~1000 samples, for a quick pipeline test
+
+  # ---------------------- download_uml_in_the_wild.py ----------------------
+  # Published archive of the UML-in-the-wild raw data: one .puml file per sample
+  # (puml_files_zip_url) plus a uml_metadata_enriched.json with a "classifications"
+  # entry per filename (uml_metadata_url). Kept here as overridable config -- update
+  # these if the archive ever moves -- rather than only hardcoded in the script.
+  puml_files_zip_url: "https://zenodo.org/records/20537143/files/puml_files.zip"
+  uml_metadata_url: "https://zenodo.org/records/20537143/files/uml_metadata_enriched.json"
+
+  # ---------------------- import_puml_files_dataset.py ----------------------
+  # Where download_uml_in_the_wild.py puts the files above, and where
+  # import_puml_files_dataset.py then reads them from.
+  puml_dir: "./data/puml_files"
+  metadata_file: "./data/puml_files/uml_metadata_enriched.json"
+  uml_in_the_wild_dir: "./data/uml_in_the_wild"
+  confusion_matrix_path: "./data/puml_files_confusion_matrix.md"
+
+  # ---------------------- join_datasets.py ----------------------
+  joined_dataset_dir: "./data/puml_joined"
+
+  # ---------------------- build_strict_dataset.py ----------------------
+  strict_dataset_dir: "./data/puml_filtered"
+  test_size: 700
+  seed: 42
+
+  # ---------------------- shared ----------------------
+  # REQUIRED: path to a JDK installation (its bin/java and bin/javac are used to run
+  # and compile the PlantUML diagram-type classifier). No default -- this is specific
+  # to your machine.
+  java_home: null
+  # Path to a plantuml.jar. Defaults to the jar bundled at data_pipeline/java/ if left
+  # unset.
+  jar_path: null
+  num_proc: 4      # workers for cheap (regex-based) filtering/import steps
+  jar_num_proc: 4  # workers for jar-based classification (each keeps one persistent JVM alive)
+  jar_timeout: 30  # seconds to allow the jar to run per sample

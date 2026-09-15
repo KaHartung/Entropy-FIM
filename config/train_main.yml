@@ -1,0 +1,59 @@
+# Main training run config. This is a template: fill in the hyperparameters below
+# with the values from your own runs before using this for real training.
+#
+# `data.entropy` is the toggle between the two experimental conditions: true runs the
+# entropy-guided FIM method (the paper's contribution), false runs the random-FIM
+# baseline it's compared against. Everything else about this config applies to both.
+
+data:
+  dataset_name: "./data/puml_filtered"  # data_pipeline/build_strict_dataset.py's output
+  train_split: "train_strict"
+  validation_split_percentage: 2
+  fim_rate: 0.9
+  fim_spm_rate: 0.5
+  entropy: true  # true = entropy-guided method, false = random-FIM baseline
+  block_size: 1024
+  window_size: 512  # Size (tokens) of the FIM middle span - searched for highest entropy when entropy: true, or placed at a random start when entropy: false; defaults to block_size // 2
+  window_size_min: 5  # Set together with window_size to linearly grow the window from this value up to window_size over training (a curriculum, applies in both entropy modes); leave null for a fixed window_size; mutually exclusive with window_size_random
+  window_size_random: false  # Draw a fresh random window size per example (still confined to the same middle 80% of the sequence) instead of a fixed/curriculum size; applies in both entropy modes; mutually exclusive with window_size_min
+  diagram_type_oversampling: true  # Square-root-scale the train split by our_diagram_type group (class+object, sequence, use_case+deployment+component, activity, state); mixed/unknown/missing left at natural count. Requires our_diagram_type populated on train_split - use train_strict_labeled, not train_strict
+
+  special_tokens:
+    prefix: "<fim_prefix>"
+    middle: "<fim_middle>"
+    suffix: "<fim_suffix>"
+    pad: "<|pad|>"
+
+  max_train_samples: null  # Use full dataset
+  max_eval_samples: null
+
+model:
+  model_name_or_path: "HuggingFaceTB/SmolLM2-135M" # base model used for the reported run
+  tokenizer_name: null
+  config_name: null
+  cache_dir: null
+  torch_dtype: "bfloat16"  # Use bf16 for GPU efficiency
+  low_cpu_mem_usage: false  # GPU has plenty of memory
+  trust_remote_code: false
+
+training:
+  output_dir: "./outputs/train"
+  overwrite_output_dir: true
+  num_train_epochs: 10
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  learning_rate: 5.0e-4
+  bf16: true  # Enable bfloat16 training
+  seed: 1
+  eval_steps: 10_000  # Less frequent eval for speed
+  save_steps: 10_000
+  save_total_limit: 10
+  load_best_model_at_end: true
+  dataloader_num_workers: 4  # See training/train.py's FIMDataCollator/WindowSizeCurriculumCallback docs for why entropy: true runs may want this at 0
+  torch_compile: false  # Set false to disable torch.compile entirely if Triton compilation fails on this node
+  run_tag: null  # Optional string appended to the run/model name (e.g. "workers0"), to tell otherwise-identical comparison runs apart
+  resume_from_checkpoint: null  # Path to a checkpoint-<N> dir (from any prior run) to fully resume from - restores optimizer/scheduler/step state and the trained FIM token embeddings. Output still goes to this config's own output_dir/run_name, so it can differ from where the checkpoint came from. Overwrite_output_dir's automatic same-directory resume is separate from this and only continues in place.
+
+  logging:
+    report_to: ["wandb"]  # Set to none if no WANDB_API_KEY is available
+    log_wandb: true

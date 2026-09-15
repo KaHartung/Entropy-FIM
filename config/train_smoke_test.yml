@@ -1,0 +1,47 @@
+# Minimal, CPU-runnable config to sanity-check that the training pipeline runs
+# end-to-end without a bug -- tiny model, tiny dataset slice, one epoch. Not meant to
+# produce a usable model.
+
+data:
+  dataset_name: "./data/comparison_datasets"  # data_pipeline/build_strict_dataset.py's output
+  train_split: "train_strict"
+  validation_split_percentage: 2
+  fim_rate: 0.9
+  fim_spm_rate: 0.5
+  entropy: true
+  block_size: 128
+
+  special_tokens:
+    prefix: "<fim_prefix>"
+    middle: "<fim_middle>"
+    suffix: "<fim_suffix>"
+    pad: "<|pad|>"
+
+  max_train_samples: 1
+  max_eval_samples: 1
+
+model:
+  model_name_or_path: "arnir0/Tiny-LLM"
+  config_name: null
+  cache_dir: null
+  torch_dtype: "float32"  # bf16 is unsupported on CPU; load_training_config also forces this when no GPU is available
+  low_cpu_mem_usage: false
+  trust_remote_code: false
+
+training:
+  output_dir: "./outputs/smoke_test"
+  overwrite_output_dir: true
+  num_train_epochs: 1
+  per_device_train_batch_size: 4
+  per_device_eval_batch_size: 4
+  learning_rate: 5.0e-5
+  bf16: false  # CPU training
+  seed: 10
+  eval_steps: 10_000
+  save_steps: 10_000
+  save_total_limit: 10
+  load_best_model_at_end: true
+
+  logging:
+    report_to: []
+    log_wandb: false  # set WANDB_MODE=disabled in your environment too, since wandb.init() still runs regardless

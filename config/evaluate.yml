@@ -1,0 +1,14 @@
+# Drives `generate` (needs the `train` uv extra, to load the trained checkpoint) and
+# `score` (needs the `score` uv extra, for bert_score) -- run as two separate steps,
+# each in its own `uv sync --extra ...` environment. See the README.
+
+evaluate:
+  model_name: null       # FILL IN: path to a trained checkpoint (avoid a trailing '/', it affects the save directory name)
+  dataset_path: "./data/comparison_datasets/test"  # data_pipeline/build_strict_dataset.py's test split
+  output_dir: "./outputs/eval"
+  subset_size: null      # null uses the full test set, otherwise min(subset_size, len(data)) samples
+  seed: 42               # auto-appended to the output name as "evs<seed>", so re-running with a different eval seed doesn't overwrite/collide with a prior run
+  do_sample: false       # false (default) uses greedy decoding. true enables sampling, using `temperature` below.
+  temperature: 1.0       # sampling temperature, only used when do_sample is true. Auto-appended to the output name as "temp<temperature>".
+  plantuml_jar_path: null  # defaults to the bundled data_pipeline/java/plantuml-mit-1.2026.6.jar if left null
+  java_home: null        # REQUIRED for `score`'s render step: path to a local JDK installation

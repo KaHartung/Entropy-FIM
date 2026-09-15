@@ -1,0 +1,45 @@
+[project]
+name = "entropy-fim-release"
+version = "0.1.0"
+description = "Entropy-guided fill-in-the-middle training/evaluation pipeline for PlantUML code generation"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyyaml>=6.0.3",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+# Data pipeline, training, and generation -- needs a recent transformers to load/save
+# checkpoints. Install with `uv sync --extra train`.
+train = [
+    "accelerate>=1.14.0",
+    "boto3>=1.43.67",
+    "datasets>=5.0.1",
+    "evaluate>=0.4.6",
+    "huggingface-hub>=0.25.0",
+    "scikit-learn>=1.9.0",
+    "smart-open>=8.0.1",
+    "torch>=2.13.0",
+    "tqdm>=4.66.0",
+    "transformers>=5.14.1",
+    "wandb>=0.28.1",
+]
+# Similarity scoring -- bert_score pins an older transformers/torch than the train
+# extra needs to load checkpoints saved by a recent transformers, so this is kept as
+# a separate, mutually exclusive environment (see [tool.uv] conflicts below). Install
+# with `uv sync --extra score`.
+score = [
+    "bert-score==0.3.13",
+    "torch==2.13.0",
+    "transformers==4.57.6",
+    "tqdm>=4.66.0",
+]
+
+[tool.uv]
+conflicts = [
+    [
+        { extra = "train" },
+        { extra = "score" },
+    ],
+]
